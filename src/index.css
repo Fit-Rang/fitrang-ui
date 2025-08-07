@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@font-face {
+  font-family: "Dancing Script";
+  src: url("./assets/fonts/DancingScript-VariableFont_wght.ttf")
+    format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Dancing Script";
+  src: url("./assets/fonts/DancingScript-VariableFont_wght.ttf")
+    format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Montserrat";
+  src: url("./assets/fonts/Montserrat-VariableFont_wght.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Montserrat";
+  src: url("./assets/fonts/Montserrat-Italic-VariableFont_wght.ttf")
+    format("truetype");
+  font-weight: normal;
+  font-style: italic;
+}
+@font-face {
+  font-family: "Montserrat";
+  src: url("./assets/fonts/static/Montserrat-Thin.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Montserrat";
+  src: url("./assets/fonts/static/Montserrat-ThinItalic.ttf") format("truetype");
+  font-weight: 100;
+  font-style: italic;
+}
+@layer utilities {
+  .bg-grid {
+    background: repeating-linear-gradient(
+        0deg,
+        #808080 0px,
+        #808080 1px,
+        transparent 1px,
+        transparent 100%
+      ),
+      repeating-linear-gradient(
+        90deg,
+        #808080 0px,
+        #808080 1px,
+        transparent 1px,
+        transparent 100%
+      );
+    background-size: 40px 40px;
+  }
+}

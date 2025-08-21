@@ -26,7 +26,7 @@ export default function ProfileCard({ profile, url }: ProfileCardProps) {
           <img
             src={profile.profile_picture_url || "https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png"}
             alt={`profile picture`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-top"
             loading="lazy"
           />
         ) : (

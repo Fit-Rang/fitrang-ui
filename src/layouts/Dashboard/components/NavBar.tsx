@@ -12,6 +12,7 @@ import { handleGetSessionId } from "../../../services/handleGetSessionId";
 import handleGetNotifications from "../../../services/handleGetNotifications";
 import handleGrantDossierAccess from "../../../services/handleGrantDossierAccess";
 import handleMarkRead from "../../../services/handleMarkRead";
+import axiosInstance from "../../../libs";
 
 type NotificationMessage = {
   id: number;
@@ -31,6 +32,10 @@ export function NavBar() {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
   const dropdownRef = useRef(null);
+
+  // To hold WebSocket instance and reconnect timer outside render
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleNavigate = (path: string) => {
     router.push(`/${path}`);
@@ -60,9 +65,9 @@ export function NavBar() {
 
   const handleGrant = async (user_id: string, notify_id: string) => {
     try {
-      const data = await handleGrantDossierAccess(user_id);
+      await handleGrantDossierAccess(user_id);
       setNotifications((prev) => prev.filter((n) => n.id.toString() !== notify_id));
-      const res = await handleMarkRead(notify_id);
+      await handleMarkRead(notify_id);
     } catch (error) {
       console.error("Grant failed:", error);
     }
@@ -70,7 +75,7 @@ export function NavBar() {
 
   const handleIgnore = async (id: string) => {
     try {
-      const res = await handleMarkRead(id);
+      await handleMarkRead(id);
       setNotifications((prev) => prev.filter((n) => n.id.toString() !== id));
     } catch (error) {
       console.error("Request Failed", error);
@@ -78,20 +83,27 @@ export function NavBar() {
   };
 
   useEffect(() => {
-    let ws: WebSocket;
+    if (!isAuthenticated || !token) return;
+
+    let isMounted = true;
 
     const setupWebSocket = async () => {
-      if (!isAuthenticated || !token) return;
-
       try {
         const sessionId = await handleGetSessionId();
         if (!sessionId) return;
 
         await fetchNotifications();
 
-        ws = new WebSocket(`ws://127.0.0.1:8000/notification-ws/ws/${sessionId}/`);
+        if (wsRef.current) {
+          wsRef.current.close();
+          wsRef.current = null;
+        }
+        const url  = new URL(axiosInstance.defaults.baseURL); 
+        const ws = new WebSocket(`ws://${url.host}/notification-ws/ws/${sessionId}/`);
+        wsRef.current = ws;
 
         ws.onmessage = (event) => {
+          if (!isMounted) return;
           const data = JSON.parse(event.data) as NotificationMessage;
           setNotifications((prev) => [data, ...prev]);
         };
@@ -100,8 +112,17 @@ export function NavBar() {
           console.error("WebSocket error:", error);
         };
 
-        ws.onclose = () => {
-          console.log("WebSocket connection closed");
+        ws.onclose = (event) => {
+          if (!isMounted) return;
+
+          if (!event.wasClean) {
+            console.log("WebSocket closed unexpectedly, reconnecting in 3 seconds...");
+            reconnectTimeoutRef.current = setTimeout(() => {
+              setupWebSocket();
+            }, 3000);
+          } else {
+            console.log("WebSocket closed cleanly.");
+          }
         };
       } catch (error) {
         console.error("Error setting up WebSocket:", error);
@@ -111,7 +132,15 @@ export function NavBar() {
     setupWebSocket();
 
     return () => {
-      if (ws) ws.close();
+      isMounted = false;
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
     };
   }, [isAuthenticated, token]);
 
@@ -203,7 +232,7 @@ export function NavBar() {
                   ) : (
                     notifications.map((n) => (
                       <li key={n.id} className="px-4 py-2 space-y-2">
-                        <p 
+                        <p
                           className="text-blue-600 underline cursor-pointer"
                           onClick={() => handleNavigate(`profile/${extractSenderId(n.text)}`)}
                         >
@@ -235,4 +264,5 @@ export function NavBar() {
     </nav>
   );
 }
+
 

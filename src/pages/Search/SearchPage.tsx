@@ -1,11 +1,14 @@
 import { useState } from "react";
 import ProfileCard from "@components/ProfileCard";
 import handleSearch from "../../services/handleSearch";
+import Back from "@assets/back.svg";
+import { useRouter } from "../../routes/hooks";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const router = useRouter()
 
   const onSearch = async () => {
     if (!query.trim()) return;
@@ -24,9 +27,13 @@ export default function SearchPage() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") onSearch();
   };
+   const handleGoBack = () => {
+     router.back()
+   }
 
   return (
     <main className="h-full w-full px-6 py-10 text-white flex flex-col items-center">
+      <img src={Back} className="absolute top-10 sm:left-10 left-2 sm:h-12 h-10 cursor-pointer bg-grey border border-gold p-1 rounded-md" onClick={handleGoBack}/>
       <h1 className="text-5xl font-dancing font-bold mb-8 text-white">
         Search Profiles
       </h1>
@@ -57,7 +64,8 @@ export default function SearchPage() {
               profile={{
                 id: profile._source.id,
                 full_name: profile._source.name,
-                createdAt: "", // Add if available
+                profile_picture_url: profile._source.profile_url,
+                createdAt: "",
                 updatedAt: ""
               }}
               url="profile"
